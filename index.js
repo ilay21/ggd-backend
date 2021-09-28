@@ -1,11 +1,7 @@
 require("dotenv").config();
+const { ApolloServer } = require("apollo-server");
 const { verify } = require("./utils/auth.utility");
 const mongoose = require("mongoose");
-const express = require("express");
-const { ApolloServer } = require("apollo-server-express");
-const typeDefs = require("./schema/types");
-const resolvers = require("./schema/resolvers");
-const path = require("path");
 
 const { DB_PREFIX, DB_CONNECTION_STRING, DB_USER, DB_PASS } = process.env;
 
@@ -16,12 +12,12 @@ mongoose.connect(`${DB_PREFIX}${DB_USER}:${DB_PASS}${DB_CONNECTION_STRING}`, {
 
 const db = mongoose.connection;
 
+const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
+db.once("open", function () {
+  const typeDefs = require("./schema/types");
+  const resolvers = require("./schema/resolvers");
 
-db.once("open", startApolloServer);
-
-async function startApolloServer() {
-  const app = express();
   const server = new ApolloServer({
     typeDefs,
     resolvers,
@@ -43,21 +39,9 @@ async function startApolloServer() {
       }
     },
   });
-  await server.start();
 
-  server.applyMiddleware({ app });
-
-  app.use(express.static(path.join(__dirname, "..", "client", "build")));
-
-  app.get("/ping", function (req, res) {
-    return res.send("pong");
+  // The `listen` method launches a web server.
+  server.listen({port: process.env.PORT || 4000}).then(({ url }) => {
+    console.log(`🚀  Server ready at ${url}`);
   });
-
-  app.get("/", function (req, res) {
-    res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
-  });
-
-  await new Promise((resolve) => app.listen({ port: process.env.PORT || 4000 }, resolve));
-  console.log(`🚀 Server ready at http://localhost:${process.env.PORT || 4000}${server.graphqlPath}`);
-  return { server, app };
-}
+});
