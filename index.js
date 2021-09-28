@@ -11,8 +11,6 @@ mongoose.connect(`${DB_PREFIX}${DB_USER}:${DB_PASS}${DB_CONNECTION_STRING}`, {
 });
 
 const db = mongoose.connection;
-
-const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", function () {
   const typeDefs = require("./schema/types");
